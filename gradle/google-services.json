@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "79611074459",
+    "project_id": "plucky-point-406416",
+    "storage_bucket": "plucky-point-406416.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79611074459:android:174b687c126ad1de5d733e",
+        "android_client_info": {
+          "package_name": "com.example.c_moto_android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "79611074459-v212uj9cglr3hl36o29rknupbljitlq3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4dV5f6avmk4AD8T2F4ANqPRJ9zkLvwMI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "79611074459-v212uj9cglr3hl36o29rknupbljitlq3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

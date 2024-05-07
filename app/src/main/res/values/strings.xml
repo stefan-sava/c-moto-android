@@ -24,4 +24,7 @@
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
     <string name="MAPS_API_KEY" />
+    <string name="login">Login</string>
+    <string name="default_web_client_id">79611074459-vjkgi8ec5gkjbdc8ss39d49liv2ojamu.apps.googleusercontent.com</string>
+
 </resources>

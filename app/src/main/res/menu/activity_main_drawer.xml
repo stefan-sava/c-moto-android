@@ -6,16 +6,18 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:title="Login"
-            android:id="@+id/login"
-            />
+            android:id="@+id/nav_home"
+            android:title="@string/menu_home" />
         <item
             android:title="Map"
             android:id="@+id/MapsFragment"
             />
         <item
-            android:id="@+id/nav_home"
-            android:title="@string/menu_home" />
+            android:title="Login"
+            android:id="@+id/LoginFragment"
+            />
+
+
 
     </group>
 

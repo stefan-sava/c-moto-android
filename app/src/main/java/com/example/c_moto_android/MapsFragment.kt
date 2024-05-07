@@ -19,24 +19,22 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.RemoteMessage
 
 class MapsFragment : Fragment() {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
-
+    private lateinit var btnSOS: Button
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mapFragment: SupportMapFragment
+    private lateinit var btnMyLocation: Button
+    private lateinit var googleMap: GoogleMap
 
     private val callback = OnMapReadyCallback { googleMap ->
-        val defaultLocation = LatLng(0.0, 0.0) // Coordonate implicite, în cazul în care nu se pot obține coordonatele reale.
+        val defaultLocation = LatLng(0.0, 0.0)
 
-        // Verificăm permisiunile pentru a accesa locația.
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            // Obținem coordonatele locației curente.
+        if (checkLocationPermission()) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     val currentLatLng = LatLng(location.latitude, location.longitude)
@@ -45,20 +43,17 @@ class MapsFragment : Fragment() {
                     )
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
                 } else {
-                    Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Unable to get current location",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     googleMap.addMarker(
                         MarkerOptions().position(defaultLocation).title("Default Location")
                     )
                     googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 1f))
                 }
             }
-        } else {
-            // Dacă nu avem permisiuni, solicităm permisiunea.
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
         }
     }
 
@@ -67,7 +62,16 @@ class MapsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_maps, container, false)
+        val view = inflater.inflate(R.layout.fragment_maps, container, false)
+        btnMyLocation = view.findViewById(R.id.btnMyLocation)
+        btnMyLocation.setOnClickListener {
+            moveToCurrentLocation()
+        }
+        btnSOS = view.findViewById(R.id.btnSOS)
+        btnSOS.setOnClickListener {
+            sendSOS()
+        }
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -77,29 +81,24 @@ class MapsFragment : Fragment() {
         mapFragment.getMapAsync(callback)
     }
 
-    private lateinit var btnMyLocation: Button
-
-    fun onViewCreated1(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        // Inițializare și setare OnClickListener pentru butonul btnMyLocation
-        btnMyLocation = view.findViewById(R.id.btnMyLocation)
-        btnMyLocation.setOnClickListener {
-            moveToCurrentLocation()
-        }
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(callback)
-    }
-
-    // Metodă pentru a muta camera hărții la locația curentă
-    private fun moveToCurrentLocation() {
+    private fun checkLocationPermission(): Boolean {
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return false
+        }
+        return true
+    }
+
+    private fun moveToCurrentLocation() {
+        if (checkLocationPermission()) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     val currentLatLng = LatLng(location.latitude, location.longitude)
@@ -107,15 +106,72 @@ class MapsFragment : Fragment() {
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
                     }
                 } else {
-                    Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Unable to get current location",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
-        } else {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
         }
     }
+
+    private fun sendSOS() {
+        if (checkLocationPermission()) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val latitude = location.latitude
+                    val longitude = location.longitude
+                    val message = "SOS: Latitude=$latitude, Longitude=$longitude"
+                    FirebaseMessaging.getInstance().send(
+                        RemoteMessage.Builder("SOS")
+                            .setMessageId(java.lang.String.valueOf(System.currentTimeMillis()))
+                            .setData(mapOf("message" to message))
+                            .build()
+                    )
+                    Toast.makeText(requireContext(), "SOS Sent!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Unable to get current location",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun setupMap() {
+        if (checkLocationPermission()) {
+            googleMap.isMyLocationEnabled = true
+            googleMap.uiSettings.isMyLocationButtonEnabled = true
+            googleMap.setOnMyLocationButtonClickListener {
+                moveToCurrentLocation()
+                true
+            }
+            moveToCurrentLocation()
+        }
+    }
+    fun showNotification(message: String) {
+        // Extrage latitudinea și longitudinea din mesajul primit
+        val regex = Regex("SOS: Latitude=(-?\\d+\\.\\d+), Longitude=(-?\\d+\\.\\d+)")
+        val matchResult = regex.find(message)
+        if (matchResult != null && matchResult.groupValues.size == 3) {
+            val latitude = matchResult.groupValues[1].toDouble()
+            val longitude = matchResult.groupValues[2].toDouble()
+            // Afișează un marcator cu locația primită pe hartă
+            val sosLocation = LatLng(latitude, longitude)
+            googleMap.addMarker(
+                MarkerOptions().position(sosLocation).title("SOS Location")
+            )
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sosLocation, 15f))
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Invalid SOS message format",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
 }
