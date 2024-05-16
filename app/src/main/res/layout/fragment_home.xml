@@ -1,45 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/welcomeText"
+    <LinearLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Bine ați venit în comunitatea de motocicliști din România!"
-        android:textSize="18sp" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@color/background_color"
+        android:gravity="center_horizontal">
 
-    <Button
-        android:id="@+id/findRoutesButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Găsește rute"
-        android:layout_marginBottom="8dp"/>
+        <ImageView
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:src="@drawable/app_logo"
+            android:layout_gravity="center"
+            android:contentDescription="@mipmap/ic_launcher_round" />
 
-    <Button
-        android:id="@+id/findGroupsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Găsește grupuri"
-        android:layout_marginBottom="8dp"/>
+        <TextView
+            android:id="@+id/welcomeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@values/font"
+            android:gravity="center"
+            android:text="Bine ați venit în comunitatea de motocicliști din România!"
+            android:textColor="@color/primary_text_color"
+            android:textSize="18sp" />
 
-    <Button
-        android:id="@+id/eventsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Evenimente"
-        android:layout_marginBottom="8dp"/>
+        <Button
+            android:id="@+id/findRoutesButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Găsește rute, service-uri, restaurante si cazari"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary_button_color"
+            android:textColor="@color/white"
+            android:fontFamily="@values/font" />
 
-    <Button
-        android:id="@+id/tipsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Sfaturi și trucuri"
-        android:layout_marginBottom="8dp"/>
+        <Button
+            android:id="@+id/findGroupsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Găsește grupuri"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary_button_color"
+            android:textColor="@color/white"
+            android:fontFamily="@values/roboto_medium" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/eventsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Evenimente"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary_button_color"
+            android:textColor="@color/white"
+            android:fontFamily="@values/font" />
+
+        <Button
+            android:id="@+id/tipsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sfaturi incepatori"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/primary_button_color"
+            android:textColor="@color/white"
+            android:fontFamily="@values/font" />
+
+    </LinearLayout>
+</ScrollView>

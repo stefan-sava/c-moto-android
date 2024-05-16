@@ -1,6 +1,9 @@
 package com.example.c_moto_android
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,6 +14,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -19,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.api.Context
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.RemoteMessage
 
@@ -79,6 +84,7 @@ class MapsFragment : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(callback)
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(sosReceiver, IntentFilter("com.example.c_moto_android.UPDATE_UI"))
     }
 
     private fun checkLocationPermission(): Boolean {
@@ -123,23 +129,38 @@ class MapsFragment : Fragment() {
                     val latitude = location.latitude
                     val longitude = location.longitude
                     val message = "SOS: Latitude=$latitude, Longitude=$longitude"
+                    // Trimitere mesaj SOS la serverul Firebase care va disemina la toți utilizatorii
                     FirebaseMessaging.getInstance().send(
-                        RemoteMessage.Builder("SOS")
+                        RemoteMessage.Builder("sender-id@firebase.com")  // Acesta trebuie să fie ID-ul de sender Firebase
                             .setMessageId(java.lang.String.valueOf(System.currentTimeMillis()))
-                            .setData(mapOf("message" to message))
+                            .addData("action", "SOS")
+                            .addData("message", message)
                             .build()
                     )
                     Toast.makeText(requireContext(), "SOS Sent!", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Unable to get current location",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Unable to get current location", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
+
+    private val sosReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: Intent) {
+            intent?.let {
+                val latitude = it.getDoubleExtra("latitude", 0.0)
+                val longitude = it.getDoubleExtra("longitude", 0.0)
+                showNotification("SOS: Latitude=$latitude, Longitude=$longitude")
+            }
+        }
+    }
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(sosReceiver)
+    }
+
 
     private fun setupMap() {
         if (checkLocationPermission()) {
@@ -173,5 +194,6 @@ class MapsFragment : Fragment() {
             ).show()
         }
     }
+
 
 }
