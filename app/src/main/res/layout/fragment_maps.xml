@@ -30,4 +30,16 @@
         android:layout_marginStart="16dp"
         android:layout_marginBottom="16dp"/>
 
+    <!-- Butonul pentru anularea SOS -->
+    <Button
+        android:id="@+id/btnCancelSOS"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel SOS"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone"/> <!-- Ascuns inițial -->
+
 </RelativeLayout>
