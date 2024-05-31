@@ -1,6 +1,7 @@
 package com.example.c_moto_android
 
 import android.Manifest
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
@@ -10,6 +11,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -36,9 +38,8 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.database.*
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.RemoteMessage
 
-class MapsFragment : Fragment() {
+class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var btnSOS: Button
@@ -52,6 +53,8 @@ class MapsFragment : Fragment() {
 
     private val callback = OnMapReadyCallback { googleMap ->
         this.googleMap = googleMap
+        this.googleMap.setOnMarkerClickListener(this) // Set the marker click listener
+
         val defaultLocation = LatLng(0.0, 0.0)
 
         if (checkLocationPermission()) {
@@ -167,30 +170,18 @@ class MapsFragment : Fragment() {
                     if (location != null) {
                         val latitude = location.latitude
                         val longitude = location.longitude
-                        val message = "SOS: Latitude=$latitude, Longitude=$longitude"
-
-                        // Trimite mesaj SOS la Firebase Realtime Database
-                        val database = FirebaseDatabase.getInstance()
-                        val myRef = database.getReference("sos_messages")
-
                         val sosMessage = HashMap<String, Any>()
                         sosMessage["latitude"] = latitude
                         sosMessage["longitude"] = longitude
                         sosMessage["timestamp"] = System.currentTimeMillis()
 
+                        val database = FirebaseDatabase.getInstance()
+                        val myRef = database.getReference("sos_messages")
+
                         val key = myRef.push().key
                         key?.let {
                             myRef.child(it).setValue(sosMessage)
                             sosKey = it
-
-                            // Trimiterea notificării către toți utilizatorii abonați la topicul sos_alerts
-                            FirebaseMessaging.getInstance().send(
-                                RemoteMessage.Builder("sos_alerts@fcm.googleapis.com")
-                                    .setMessageId(System.currentTimeMillis().toString())
-                                    .addData("action", "SOS")
-                                    .addData("message", message)
-                                    .build()
-                            )
                         }
 
                         // Actualizează vizibilitatea butoanelor
@@ -311,6 +302,26 @@ class MapsFragment : Fragment() {
         marker?.tag = key
         sosMarkers.add(marker!!)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+    }
+
+    override fun onMarkerClick(marker: Marker): Boolean {
+        val position = marker.position
+        AlertDialog.Builder(requireContext())
+            .setTitle("Navigheaza catre locatie")
+            .setMessage("Vrei sa navighezi catre aceasta locatie?")
+            .setPositiveButton("Da") { _, _ ->
+                val uri = Uri.parse("google.navigation:q=${position.latitude},${position.longitude}")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                if (intent.resolveActivity(requireContext().packageManager) != null) {
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(requireContext(), "Google Maps not installed", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Nu", null)
+            .show()
+        return true
     }
 
     private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor {

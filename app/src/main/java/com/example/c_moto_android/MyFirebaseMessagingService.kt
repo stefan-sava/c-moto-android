@@ -91,7 +91,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d(TAG, "Refreshed token: $token")
 
-        // Abonare la topicul sos_alerts
+        // Subscribe to the SOS alerts topic
         FirebaseMessaging.getInstance().subscribeToTopic("sos_alerts")
             .addOnCompleteListener { task ->
                 var msg = "Subscribed to SOS alerts"
@@ -101,12 +101,25 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 Log.d(TAG, msg)
             }
 
-        // Stochează token-ul în Firebase Realtime Database
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId != null) {
+        // Store the token in Firebase Realtime Database
+        storeToken(token)
+    }
+
+    private fun storeToken(token: String) {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            val userId = user.uid
             val database = FirebaseDatabase.getInstance()
             val tokensRef = database.getReference("tokens")
-            tokensRef.child(userId).setValue(token)
+            tokensRef.child(userId).setValue(token).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Token successfully stored")
+                } else {
+                    Log.d(TAG, "Failed to store token")
+                }
+            }
+        } else {
+            Log.d(TAG, "User is not authenticated, cannot store token")
         }
     }
 
