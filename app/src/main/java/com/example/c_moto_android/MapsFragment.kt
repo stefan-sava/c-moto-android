@@ -121,7 +121,10 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
         mapFragment.getMapAsync(callback)
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(sosReceiver, IntentFilter("com.example.c_moto_android.UPDATE_UI"))
 
-        // Ascultă mesajele SOS din Firebase Realtime Database
+        // Check SOS state in Firebase
+        checkSOSState()
+
+        // Listen to SOS messages in Firebase Realtime Database
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("sos_messages")
 
@@ -140,6 +143,7 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
             override fun onChildRemoved(dataSnapshot: DataSnapshot) {
                 val key = dataSnapshot.key
                 sosMarkers.find { it.tag == key }?.remove()
+                updateButtonStates(false)
             }
 
             override fun onChildMoved(dataSnapshot: DataSnapshot, previousChildName: String?) {}
@@ -174,6 +178,7 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
                         sosMessage["latitude"] = latitude
                         sosMessage["longitude"] = longitude
                         sosMessage["timestamp"] = System.currentTimeMillis()
+                        sosMessage["active"] = true
 
                         val database = FirebaseDatabase.getInstance()
                         val myRef = database.getReference("sos_messages")
@@ -184,9 +189,7 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
                             sosKey = it
                         }
 
-                        // Actualizează vizibilitatea butoanelor
-                        btnSOS.visibility = View.GONE
-                        btnCancelSOS.visibility = View.VISIBLE
+                        updateButtonStates(true)
                     } else {
                         Toast.makeText(
                             requireContext(),
@@ -202,76 +205,13 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
         }
     }
 
-    private fun sendNotificationsToAllUsers(message: String) {
-        val database = FirebaseDatabase.getInstance()
-        val tokensRef = database.getReference("tokens")
-
-        tokensRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val tokenList = mutableListOf<String>()
-                for (tokenSnapshot in dataSnapshot.children) {
-                    val token = tokenSnapshot.getValue(String::class.java)
-                    token?.let {
-                        tokenList.add(it)
-                    }
-                }
-                sendNotifications(tokenList, message)
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(TAG, "loadTokens:onCancelled", databaseError.toException())
-            }
-        })
-    }
-
-    private fun sendNotifications(tokens: List<String>, message: String) {
-        for (token in tokens) {
-            val notification = NotificationCompat.Builder(requireContext(), "sos_channel")
-                .setSmallIcon(R.drawable.ic_sos)
-                .setContentTitle("SOS Alert")
-                .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build()
-
-            val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(token.hashCode(), notification)
-        }
-    }
-
-    private fun showNotification(message: String) {
-        val channelId = "sos_channel"
-        val channelName = "SOS Alerts"
-        val notificationManager =
-            requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                channelName,
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        val notificationBuilder = NotificationCompat.Builder(requireContext(), channelId)
-            .setSmallIcon(R.drawable.ic_sos)
-            .setContentTitle("SOS Alert")
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
-    }
-
     private fun cancelSOS() {
         sosKey?.let {
             val database = FirebaseDatabase.getInstance()
             val myRef = database.getReference("sos_messages").child(it)
             myRef.removeValue().addOnSuccessListener {
                 sosKey = null
-                btnSOS.visibility = View.VISIBLE
-                btnCancelSOS.visibility = View.GONE
+                updateButtonStates(false)
             }.addOnFailureListener {
                 Toast.makeText(
                     requireContext(),
@@ -302,6 +242,43 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
         marker?.tag = key
         sosMarkers.add(marker!!)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+    }
+
+    private fun updateButtonStates(isSOSActive: Boolean) {
+        if (isSOSActive) {
+            btnSOS.visibility = View.GONE
+            btnCancelSOS.visibility = View.VISIBLE
+        } else {
+            btnSOS.visibility = View.VISIBLE
+            btnCancelSOS.visibility = View.GONE
+        }
+    }
+
+    private fun checkSOSState() {
+        val database = FirebaseDatabase.getInstance()
+        val myRef = database.getReference("sos_messages")
+
+        myRef.orderByChild("active").equalTo(true).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    dataSnapshot.children.forEach {
+                        val latitude = it.child("latitude").getValue(Double::class.java)
+                        val longitude = it.child("longitude").getValue(Double::class.java)
+                        if (latitude != null && longitude != null) {
+                            sosKey = it.key
+                            showSosMarker(LatLng(latitude, longitude), it.key!!)
+                            updateButtonStates(true)
+                        }
+                    }
+                } else {
+                    updateButtonStates(false)
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(TAG, "checkSOSState:onCancelled", databaseError.toException())
+            }
+        })
     }
 
     override fun onMarkerClick(marker: Marker): Boolean {
@@ -366,6 +343,48 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
             val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
             val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun sendNotificationsToAllUsers(message: String) {
+        val database = FirebaseDatabase.getInstance()
+        val tokensRef = database.getReference("tokens")
+
+        tokensRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val tokenList = mutableListOf<String>()
+                for (tokenSnapshot in dataSnapshot.children) {
+                    val token = tokenSnapshot.getValue(String::class.java)
+                    token?.let {
+                        tokenList.add(it)
+                    }
+                }
+                if (tokenList.isNotEmpty()) {
+                    sendNotification(tokenList, message)
+                } else {
+                    Log.w(TAG, "No tokens found for sending notifications.")
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(TAG, "loadTokens:onCancelled", databaseError.toException())
+            }
+        })
+    }
+
+    private fun sendNotification(tokens: List<String>, message: String) {
+        val notificationManager = requireContext().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        for (token in tokens) {
+            val notification = NotificationCompat.Builder(requireContext(), "sos_channel")
+                .setSmallIcon(R.drawable.ic_sos)
+                .setContentTitle("SOS Alert")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .build()
+
+            notificationManager.notify(token.hashCode(), notification)
         }
     }
 

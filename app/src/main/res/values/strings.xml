@@ -26,5 +26,10 @@
     <string name="MAPS_API_KEY" />
     <string name="login">Login</string>
     <string name="default_web_client_id">79611074459-vjkgi8ec5gkjbdc8ss39d49liv2ojamu.apps.googleusercontent.com</string>
+    <string name="theme">theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_summary">Enable or disable dark mode</string>
+
+
 
 </resources>

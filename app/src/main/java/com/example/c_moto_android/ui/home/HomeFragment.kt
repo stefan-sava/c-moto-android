@@ -52,7 +52,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun openFacebookGroups() {
-        val url = "https://www.facebook.com/groups/search/groups/?q=moto"
+        val url = "https://www.facebook.com/search/groups_home/?q=moto"
         val intent = Intent(Intent.ACTION_VIEW)
         intent.data = Uri.parse(url)
         startActivity(intent)

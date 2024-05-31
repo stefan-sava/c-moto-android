@@ -2,6 +2,7 @@ package com.example.c_moto_android;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +15,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -25,6 +25,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class LoginFragment extends Fragment {
 
@@ -32,6 +34,7 @@ public class LoginFragment extends Fragment {
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
     private Button mLoginButton;
+    private Button mSignOutButton;
     private TextView mUserInfoTextView;
 
     @Override
@@ -47,6 +50,7 @@ public class LoginFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login, container, false);
         mLoginButton = view.findViewById(R.id.login_button);
+        mSignOutButton = view.findViewById(R.id.signout_button);
         mUserInfoTextView = view.findViewById(R.id.user_info_textview);
 
         FirebaseUser user = mAuth.getCurrentUser();
@@ -58,6 +62,14 @@ public class LoginFragment extends Fragment {
                 signInWithGoogle();
             }
         });
+
+        mSignOutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                signOut();
+            }
+        });
+
         return view;
     }
 
@@ -110,8 +122,8 @@ public class LoginFragment extends Fragment {
                                 // Creare cont nou cu nume
                                 createNewUserProfile(user, "Numele Utilizatorului");
                             } else {
-                                updateUI(user);
-                                navigateToHome();
+                                // Obțineți și stocați token-ul FCM
+                                getAndStoreToken(user);
                             }
                         }
                     } else {
@@ -131,12 +143,52 @@ public class LoginFragment extends Fragment {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(getContext(), "Profil creat cu succes", Toast.LENGTH_SHORT).show();
-                        updateUI(user);
-                        navigateToHome();
+                        // Obțineți și stocați token-ul FCM
+                        getAndStoreToken(user);
                     } else {
                         Toast.makeText(getContext(), "Eroare la crearea profilului", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void getAndStoreToken(FirebaseUser user) {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("LoginFragment", "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+
+                    // Get new FCM registration token
+                    String token = task.getResult();
+                    storeToken(user.getUid(), token);
+                });
+    }
+
+    private void storeToken(String userId, String token) {
+        FirebaseDatabase.getInstance().getReference("tokens")
+                .child(userId)
+                .setValue(token)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("LoginFragment", "Token stored successfully");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        updateUI(user);
+                        navigateToHome();
+                    } else {
+                        Log.w("LoginFragment", "Failed to store token");
+                    }
+                });
+    }
+
+    private void signOut() {
+        // Sign out from Firebase
+        mAuth.signOut();
+        // Sign out from Google
+        mGoogleSignInClient.signOut().addOnCompleteListener(getActivity(), task -> {
+            updateUI(null);
+            Toast.makeText(getContext(), "Signed out successfully", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void navigateToHome() {
@@ -147,10 +199,12 @@ public class LoginFragment extends Fragment {
         if (user != null) {
             mUserInfoTextView.setText("Bine ai venit, " + user.getDisplayName());
             mLoginButton.setVisibility(View.GONE);
+            mSignOutButton.setVisibility(View.VISIBLE);
             mUserInfoTextView.setVisibility(View.VISIBLE);
         } else {
             mUserInfoTextView.setText("");
             mLoginButton.setVisibility(View.VISIBLE);
+            mSignOutButton.setVisibility(View.GONE);
             mUserInfoTextView.setVisibility(View.GONE);
         }
     }

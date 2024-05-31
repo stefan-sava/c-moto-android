@@ -4,12 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.c_moto_android.com.example.c_moto_android.PreferencesManager
 import com.example.c_moto_android.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
@@ -23,8 +25,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
+    private lateinit var preferencesManager: PreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Apply the theme before setting the content view
+        preferencesManager = PreferencesManager(this)
+        if (preferencesManager.isDarkModeEnabled) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         auth = FirebaseAuth.getInstance()
@@ -39,7 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.MapsFragment, R.id.LoginFragment, R.id.nav_home
+                R.id.MapsFragment, R.id.LoginFragment, R.id.nav_home, R.id.nav_settings
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -47,7 +58,6 @@ class MainActivity : AppCompatActivity() {
 
         checkUserAuthentication()
         handleIntent(intent)
-        subscribeToSosAlerts()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -76,17 +86,6 @@ class MainActivity : AppCompatActivity() {
             val navController = findNavController(R.id.nav_host_fragment_content_main)
             navController.navigate(R.id.MapsFragment, bundle)
         }
-    }
-
-    private fun subscribeToSosAlerts() {
-        FirebaseMessaging.getInstance().subscribeToTopic("sos_alerts")
-            .addOnCompleteListener { task ->
-                var msg = "Subscribed to SOS alerts"
-                if (!task.isSuccessful) {
-                    msg = "Subscription to SOS alerts failed"
-                }
-                Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT).show()
-            }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
