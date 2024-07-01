@@ -123,7 +123,6 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
 
         checkSOSState()
 
-
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("sos_messages")
 
@@ -131,7 +130,7 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
             override fun onChildAdded(dataSnapshot: DataSnapshot, previousChildName: String?) {
                 val latitude = dataSnapshot.child("latitude").getValue(Double::class.java)
                 val longitude = dataSnapshot.child("longitude").getValue(Double::class.java)
-                if (latitude != null && longitude != null) {
+                if (latitude != null && longitude != null && isAdded) {
                     val message = "SOS: Latitude=$latitude, Longitude=$longitude"
                     showSosMarker(LatLng(latitude, longitude), dataSnapshot.key!!)
                     sendNotificationsToAllUsers(message)
@@ -162,7 +161,9 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
             val latitude = intent.getDoubleExtra("latitude", 0.0)
             val longitude = intent.getDoubleExtra("longitude", 0.0)
             val sosLocation = LatLng(latitude, longitude)
-            showSosMarker(sosLocation, "")
+            if (isAdded) {
+                showSosMarker(sosLocation, "")
+            }
         }
     }
 
@@ -235,6 +236,8 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
     }
 
     private fun showSosMarker(location: LatLng, key: String) {
+        if (!isAdded) return // Ensure the fragment is added to the activity
+
         val markerOptions = MarkerOptions().position(location).title("SOS Location")
             .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_sos))
         val marker = googleMap.addMarker(markerOptions)
@@ -265,8 +268,10 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
                         val longitude = it.child("longitude").getValue(Double::class.java)
                         if (latitude != null && longitude != null) {
                             sosKey = it.key
-                            showSosMarker(LatLng(latitude, longitude), it.key!!)
-                            updateButtonStates(true)
+                            if (isAdded) {
+                                showSosMarker(LatLng(latitude, longitude), it.key!!)
+                                updateButtonStates(true)
+                            }
                         }
                     }
                 } else {

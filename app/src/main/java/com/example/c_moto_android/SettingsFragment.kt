@@ -1,4 +1,4 @@
-package com.example.c_moto_android.ui.settings
+package com.example.c_moto_android
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate

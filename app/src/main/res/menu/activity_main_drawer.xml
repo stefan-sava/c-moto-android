@@ -17,8 +17,12 @@
             android:id="@+id/MapsFragment"
             />
         <item
+            android:id="@+id/TowRequestFragment"
+            android:title="Tractari"/>
+        <item
             android:id="@+id/nav_settings"
             android:title="Settings"/>
+
 
     </group>
 

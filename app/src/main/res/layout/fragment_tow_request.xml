@@ -1,0 +1,49 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Introdu numele" />
+
+    <EditText
+        android:id="@+id/etPhoneNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Introdu numarul de telefon"
+        android:inputType="phone" />
+
+    <EditText
+        android:id="@+id/etMaxPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Introdu pretul maxim"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/btnSubmitRequest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trimite cerere" />
+
+    <TextView
+        android:id="@+id/tvBids"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cereri"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingTop="16dp" />
+
+    <LinearLayout
+        android:id="@+id/layoutBids"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+</LinearLayout>

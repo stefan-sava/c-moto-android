@@ -5,7 +5,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/settings_container"
-        android:name="com.example.c_moto_android.ui.settings.SettingsFragment"
+        android:name="com.example.c_moto_android.SettingsFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </FrameLayout>
