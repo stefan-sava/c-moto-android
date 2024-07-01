@@ -3,10 +3,9 @@ package com.example.c_moto_android.ui.settings
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import androidx.preference.SwitchPreferenceCompat
 import com.example.c_moto_android.R
-import com.example.c_moto_android.com.example.c_moto_android.PreferencesManager
+import com.example.c_moto_android.PreferencesManager
 
 class SettingsFragment : PreferenceFragmentCompat() {
 

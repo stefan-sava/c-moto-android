@@ -121,10 +121,9 @@ class MapsFragment : Fragment(), GoogleMap.OnMarkerClickListener {
         mapFragment.getMapAsync(callback)
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(sosReceiver, IntentFilter("com.example.c_moto_android.UPDATE_UI"))
 
-        // Check SOS state in Firebase
         checkSOSState()
 
-        // Listen to SOS messages in Firebase Realtime Database
+
         val database = FirebaseDatabase.getInstance()
         val myRef = database.getReference("sos_messages")
 

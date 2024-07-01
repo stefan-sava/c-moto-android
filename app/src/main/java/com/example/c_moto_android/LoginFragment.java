@@ -41,7 +41,6 @@ public class LoginFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
-        // Configurare Google Sign In
         mGoogleSignInClient = configureGoogleSignIn();
     }
 
@@ -158,8 +157,6 @@ public class LoginFragment extends Fragment {
                         Log.w("LoginFragment", "Fetching FCM registration token failed", task.getException());
                         return;
                     }
-
-                    // Get new FCM registration token
                     String token = task.getResult();
                     storeToken(user.getUid(), token);
                 });

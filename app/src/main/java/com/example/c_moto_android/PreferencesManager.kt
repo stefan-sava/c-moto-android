@@ -1,4 +1,4 @@
-package com.example.c_moto_android.com.example.c_moto_android
+package com.example.c_moto_android
 
 import android.content.Context
 import androidx.preference.PreferenceManager
